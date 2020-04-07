@@ -67,7 +67,7 @@ namespace Coverlet.Core.Tests
             return coverage.GetCoverageResult();
         }
 
-        async public static Task<CoveragePrepareResult> Run<T>(Func<dynamic, Task> callMethod, Func<string, string[]> includeFilter = null, Func<string, string[]> excludeFilter = null, string persistPrepareResultToFile = null, bool disableRestoreModules = false)
+        async public static Task<CoveragePrepareResult> Run<T>(Func<dynamic, Task> callMethod, Func<string, string[]> includeFilter = null, Func<string, string[]> excludeFilter = null, string[] excludeAttributes = null, string persistPrepareResultToFile = null, bool disableRestoreModules = false)
         {
             if (persistPrepareResultToFile is null)
             {
@@ -98,7 +98,9 @@ namespace Coverlet.Core.Tests
             {
                 "[xunit.*]*",
                 "[coverlet.*]*"
-            }).ToArray(), Array.Empty<string>(), Array.Empty<string>(), true, false, "", false, new Logger(logFile), _processWideContainer.GetService<IInstrumentationHelper>(), _processWideContainer.GetService<IFileSystem>());
+            }).ToArray(), Array.Empty<string>(),
+            excludeAttributes: excludeAttributes ?? Array.Empty<string>(),
+            true, false, "", false, new Logger(logFile), _processWideContainer.GetService<IInstrumentationHelper>(), _processWideContainer.GetService<IFileSystem>());
             CoveragePrepareResult prepareResult = coverage.PrepareModules();
 
             Assert.Single(prepareResult.Results);

@@ -144,7 +144,8 @@ namespace Coverlet.Core.Tests
                         ((Task)instance.TestAsync(100)).ConfigureAwait(false).GetAwaiter().GetResult();
 
                         return Task.CompletedTask;
-                    }, persistPrepareResultToFile: pathSerialize[0], disableRestoreModules: true);
+                    }, persistPrepareResultToFile: pathSerialize[0], disableRestoreModules: true
+                    , excludeAttributes: new[] { "CompilerGeneratedAttribute" });
                     return 0;
                 }, new string[] { path });
 

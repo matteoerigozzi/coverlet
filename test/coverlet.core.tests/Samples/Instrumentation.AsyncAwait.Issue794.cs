@@ -8,25 +8,13 @@ namespace Coverlet.Core.Samples.Tests
     {
         public async Task<int> TestAsync(int num)
         {
-            if (num > 50)
-            {
-                return num;
-            }
-
-            try
-            {
-                await AsyncWait(num);
-                return num;
-            }
-            catch (System.Exception)
-            {
-                return num;
-            }
+            await Task.Delay(0);
+            return num;
         }
 
-        private async Task AsyncWait(int iterations)
+        private void ThisMethodIsNotUsed()
         {
-            await Task.Delay(iterations);
+            // But must be here to generate coverage for this class at all
         }
     }
 }
