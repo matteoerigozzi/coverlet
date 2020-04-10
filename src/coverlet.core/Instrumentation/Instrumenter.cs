@@ -147,8 +147,12 @@ namespace Coverlet.Core.Instrumentation
         {
             for (TypeDefinition current = type; current != null; current = current.DeclaringType)
             {
+                var attributes = IsAsyncStateMachine(type) ?
+                    current.CustomAttributes.Where(a => a.AttributeType.Name != nameof(CompilerGeneratedAttribute)) :
+                    current.CustomAttributes;
+
                 // Check exclude attribute and filters
-                if (current.CustomAttributes.Any(IsExcludeAttribute) || _instrumentationHelper.IsTypeExcluded(_module, current.FullName, _excludeFilters))
+                if (attributes.Any(IsExcludeAttribute) || _instrumentationHelper.IsTypeExcluded(_module, current.FullName, _excludeFilters))
                 {
                     return true;
                 }
@@ -199,10 +203,13 @@ namespace Coverlet.Core.Instrumentation
 
                     foreach (TypeDefinition type in types)
                     {
+                        var actualType = type.DeclaringType ?? type;
                         if (
-                            !Is_System_Threading_Interlocked_CoreLib_Type(type) &&
-                            !IsTypeExcluded(type) &&
-                            _instrumentationHelper.IsTypeIncluded(_module, type.FullName, _includeFilters)
+                            !actualType.CustomAttributes.Any(IsExcludeAttribute)
+                            // Instrumenting Interlocked which is used for recording hits would cause an infinite loop.
+                            && (!_isCoreLibrary || actualType.FullName != "System.Threading.Interlocked")
+                            && !_instrumentationHelper.IsTypeExcluded(_module, actualType.FullName, _excludeFilters)
+                            && _instrumentationHelper.IsTypeIncluded(_module, actualType.FullName, _includeFilters)
                             )
                         {
                             if (IsSynthesizedMemberToBeExcluded(type))
@@ -265,6 +272,19 @@ namespace Coverlet.Core.Instrumentation
                     module.Write(stream, new WriterParameters { WriteSymbols = true });
                 }
             }
+        }
+
+        private bool IsAsyncStateMachine(TypeDefinition type)
+        {
+            foreach (InterfaceImplementation implementedInterface in type.Interfaces)
+            {
+                if (implementedInterface.InterfaceType.FullName == "System.Runtime.CompilerServices.IAsyncStateMachine")
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void AddCustomModuleTrackerToModule(ModuleDefinition module)
